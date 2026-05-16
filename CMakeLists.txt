@@ -3,4 +3,6 @@ project(parallel_regex_engine)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(parallel_regex_engine main.cpp)
+add_executable(parallel_regex_engine main.cpp
+        RegexParser.cpp
+        RegexParser.h)
