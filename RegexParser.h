@@ -40,7 +40,7 @@ struct RegexNode {
 class RegexParser {
     // supports grouping, alternation operator, Kleene star, plus operator and the question mark operator
 private:
-    int pos = 0;
+    size_t pos = 0;
     std::string input;
 
     [[nodiscard]] char curr() const {
