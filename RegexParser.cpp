@@ -7,7 +7,7 @@ RegexNode* RegexParser::parse_expr() {
 
     while (true) {
         const char c = curr();
-        RegexNode* right = c == '|' || c == ')' || c == '\0'
+        RegexNode* right = c == '|' || c == ')' || c == '\0' // handles edge cases such as `()` `a||b` `(a|)` `a|`
             ? new RegexNode{RegexNodeType::EPSILON, 0, nullptr, nullptr}
             : parse_concat();
         if (right == nullptr) {
