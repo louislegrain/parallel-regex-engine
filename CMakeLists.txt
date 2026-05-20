@@ -5,4 +5,6 @@ set(CMAKE_CXX_STANDARD 20)
 
 add_executable(parallel_regex_engine main.cpp
         RegexParser.cpp
-        RegexParser.h)
+        RegexParser.h
+        Automata.cpp
+        Automata.h)
