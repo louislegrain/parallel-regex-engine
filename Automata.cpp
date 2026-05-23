@@ -1,6 +1,3 @@
-#include <map>
-#include <queue>
-#include <set>
 #include "Automata.h"
 
 // Useful for the McNaughton–Yamada–Thompson algorithm
@@ -12,41 +9,41 @@ struct NFAFragment {
 };
 
 size_t NFA::add_state() {
-    states.push_back({});
+    states.emplace_back();
     return states.size() - 1;
 }
 
-void NFA::add_transition(size_t from, size_t to, char c) {
-    states[from].transitions.push_back({c, to});
+void NFA::add_transition(const size_t from, const size_t to, const char c) {
+    states[from].transitions.emplace_back(c, to);
 }
 
 NFAFragment build_fragment(const RegexNode* node, NFA& nfa) {
     if (node->type == RegexNodeType::EPSILON) {
-        size_t s = nfa.add_state();
-        size_t a = nfa.add_state();
+        const size_t s = nfa.add_state();
+        const size_t a = nfa.add_state();
         nfa.add_transition(s, a, EPSILON);
         return {s, a};
     }
     
     if (node->type == RegexNodeType::CHAR) {
-        size_t s = nfa.add_state();
-        size_t a = nfa.add_state();
+        const size_t s = nfa.add_state();
+        const size_t a = nfa.add_state();
         nfa.add_transition(s, a, node->value);
         return {s, a};
     }
     
     if (node->type == RegexNodeType::CONCAT) {
-        NFAFragment left = build_fragment(node->op1, nfa);
-        NFAFragment right = build_fragment(node->op2, nfa);
+        const NFAFragment left = build_fragment(node->op1, nfa);
+        const NFAFragment right = build_fragment(node->op2, nfa);
         nfa.add_transition(left.accept, right.start, EPSILON);
         return {left.start, right.accept};
     }
     
     if (node->type == RegexNodeType::ALTER) {
-        size_t s = nfa.add_state();
-        size_t a = nfa.add_state();
-        NFAFragment left = build_fragment(node->op1, nfa);
-        NFAFragment right = build_fragment(node->op2, nfa);
+        const size_t s = nfa.add_state();
+        const size_t a = nfa.add_state();
+        const NFAFragment left = build_fragment(node->op1, nfa);
+        const NFAFragment right = build_fragment(node->op2, nfa);
         nfa.add_transition(s, left.start, EPSILON);
         nfa.add_transition(s, right.start, EPSILON);
         nfa.add_transition(left.accept, a, EPSILON);
@@ -56,9 +53,9 @@ NFAFragment build_fragment(const RegexNode* node, NFA& nfa) {
     
     // STAR (write it with an if and do an exception after like unsuported regex
     // node type ??)
-    size_t s = nfa.add_state();
-    size_t a = nfa.add_state();
-    NFAFragment inner = build_fragment(node->op1, nfa);
+    const size_t s = nfa.add_state();
+    const size_t a = nfa.add_state();
+    const NFAFragment inner = build_fragment(node->op1, nfa);
     nfa.add_transition(s, inner.start, EPSILON);
     nfa.add_transition(s, a, EPSILON);
     nfa.add_transition(inner.accept, inner.start, EPSILON);
@@ -68,21 +65,21 @@ NFAFragment build_fragment(const RegexNode* node, NFA& nfa) {
 
 void NFA::build(const RegexNode* root) {
     states.clear();
-    NFAFragment f = build_fragment(root, *this);
+    const NFAFragment f = build_fragment(root, *this);
     initial_state = f.start;
     accepting_state = f.accept;
 }
 
-size_t DFA::step(size_t state, char c) const {
+size_t DFA::step(const size_t state, const char c) const {
     if (state >= states.size()) {
         return INVALID_STATE;
     }
-    return states[state].transitions[(unsigned char)c];
+    return states[state].transitions[static_cast<unsigned char>(c)];
 }
 
 bool DFA::accepts(const std::string& text) const {
     size_t state = initial_state;
-    for (char c : text) {
+    for (const char c : text) {
         state = step(state, c);
         if (state == INVALID_STATE) {
             return false;

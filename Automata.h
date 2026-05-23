@@ -39,9 +39,9 @@ private:
 public:
     void build(const NFA& nfa);
     // use of const because read only methods
-    size_t step(size_t state, char c) const;     // perform DFA transition
-    bool accepts(const std::string &text) const; // sequ DFA matcher
-    size_t size() const;                         // nb of DFA states
+    [[nodiscard]] size_t step(size_t state, char c) const;     // perform DFA transition
+    [[nodiscard]] bool accepts(const std::string &text) const; // sequ DFA matcher
+    [[nodiscard]] size_t size() const;                         // nb of DFA states
 };
 
 #endif //PARALLEL_REGEX_ENGINE_AUTOMATA_H
