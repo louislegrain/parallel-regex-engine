@@ -37,6 +37,7 @@ struct DFAState {
 
 class DFA {
     friend class SFA;
+    friend class PaREMMatcher;
 
 private:
     size_t initial_state = 0;
