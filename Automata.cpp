@@ -16,33 +16,29 @@ size_t NFA::add_state() {
     return states.size() - 1;
 }
 
-void NFA::add_transition(size_t from, char c, size_t to) {
+void NFA::add_transition(size_t from, size_t to, char c) {
     states[from].transitions.push_back({c, to});
-}
-
-void NFA::add_epsilon(size_t from, size_t to) {
-    states[from].epsilon.push_back(to);
 }
 
 NFAFragment build_fragment(const RegexNode* node, NFA& nfa) {
     if (node->type == RegexNodeType::EPSILON) {
         size_t s = nfa.add_state();
         size_t a = nfa.add_state();
-        nfa.add_epsilon(s, a);
+        nfa.add_transition(s, a, EPSILON);
         return {s, a};
     }
     
     if (node->type == RegexNodeType::CHAR) {
         size_t s = nfa.add_state();
         size_t a = nfa.add_state();
-        nfa.add_transition(s, node->value, a);
+        nfa.add_transition(s, a, node->value);
         return {s, a};
     }
     
     if (node->type == RegexNodeType::CONCAT) {
         NFAFragment left = build_fragment(node->op1, nfa);
         NFAFragment right = build_fragment(node->op2, nfa);
-        nfa.add_epsilon(left.accept, right.start);
+        nfa.add_transition(left.accept, right.start, EPSILON);
         return {left.start, right.accept};
     }
     
@@ -51,10 +47,10 @@ NFAFragment build_fragment(const RegexNode* node, NFA& nfa) {
         size_t a = nfa.add_state();
         NFAFragment left = build_fragment(node->op1, nfa);
         NFAFragment right = build_fragment(node->op2, nfa);
-        nfa.add_epsilon(s, left.start);
-        nfa.add_epsilon(s, right.start);
-        nfa.add_epsilon(left.accept, a);
-        nfa.add_epsilon(right.accept, a);
+        nfa.add_transition(s, left.start, EPSILON);
+        nfa.add_transition(s, right.start, EPSILON);
+        nfa.add_transition(left.accept, a, EPSILON);
+        nfa.add_transition(right.accept, a, EPSILON);
         return {s, a};
     }
     
@@ -63,10 +59,10 @@ NFAFragment build_fragment(const RegexNode* node, NFA& nfa) {
     size_t s = nfa.add_state();
     size_t a = nfa.add_state();
     NFAFragment inner = build_fragment(node->op1, nfa);
-    nfa.add_epsilon(s, inner.start);
-    nfa.add_epsilon(s, a);
-    nfa.add_epsilon(inner.accept, inner.start);
-    nfa.add_epsilon(inner.accept, a);
+    nfa.add_transition(s, inner.start, EPSILON);
+    nfa.add_transition(s, a, EPSILON);
+    nfa.add_transition(inner.accept, inner.start, EPSILON);
+    nfa.add_transition(inner.accept, a, EPSILON);
     return {s, a};
 }
 

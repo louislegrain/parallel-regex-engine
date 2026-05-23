@@ -6,10 +6,10 @@
 #include "RegexParser.h"
 
 constexpr size_t INVALID_STATE = std::numeric_limits<size_t>::max();
+constexpr char EPSILON = '\0';
 
 struct NFAState {
     std::vector<std::pair<char, size_t>> transitions;
-    std::vector<size_t> epsilon;
 };
 
 class NFA {
@@ -22,8 +22,7 @@ private:
 public:
     void build(const RegexNode* root);
     size_t add_state();
-    void add_transition(size_t from, char c, size_t to);
-    void add_epsilon(size_t from, size_t to);
+    void add_transition(size_t from, size_t to, char c);
 };
 
 struct DFAState {
