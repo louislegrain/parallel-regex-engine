@@ -9,15 +9,21 @@ constexpr size_t INVALID_STATE = std::numeric_limits<size_t>::max();
 
 struct NFAState {
     std::vector<std::pair<char, size_t>> transitions;
+    std::vector<size_t> epsilon;
 };
 
 class NFA {
+    friend class DFA;
+
 private:
     size_t initial_state = 0;
     size_t accepting_state = 0;
     std::vector<NFAState> states;
 public:
     void build(const RegexNode* root);
+    size_t add_state();
+    void add_transition(size_t from, char c, size_t to);
+    void add_epsilon(size_t from, size_t to);
 };
 
 struct DFAState {
@@ -34,9 +40,9 @@ private:
 public:
     void build(const NFA& nfa);
     // use of const because read only methods
-    int step(int state, char c) const;           // perform DFA transition
+    size_t step(size_t state, char c) const;     // perform DFA transition
     bool accepts(const std::string &text) const; // sequ DFA matcher
-    int size() const;                            // nb of DFA states
+    size_t size() const;                         // nb of DFA states
 };
 
 #endif //PARALLEL_REGEX_ENGINE_AUTOMATA_H
