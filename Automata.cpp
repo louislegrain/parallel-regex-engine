@@ -11,35 +11,35 @@ struct NFAFragment {
     int accept;
 };
 
-int DFA::step(int state, char c) const {
-    if (state < 0 || state >= size()) {
-        return -1;
+size_t DFA::step(size_t state, char c) const {
+    if (state >= states.size()) {
+        return INVALID_STATE;
     }
-    return transitions[state][(unsigned char)c]; // cast so that in 0 to 255
+    return states[state].transitions[(unsigned char)c];
 }
 
 bool DFA::accepts(const std::string& text) const {
-    int state = start_state;
+    size_t state = initial_state;
     for (char c : text) {
         state = step(state, c);
-        if (state == -1)
-        return false;
+        if (state == INVALID_STATE) {
+            return false;
+        }
     }
-    return final_states[state];
+    return states[state].accepting;
 }
 
-int DFA::size() const { return transitions.size(); }
+size_t DFA::size() const { return states.size(); }
 
-NFAFragment build_fragment(RegexNode* node, NFA& nfa) {
+NFAFragment build_fragment(const RegexNode* node, NFA& nfa) {
     // To do
 }
 
 void NFA::build(const RegexNode* root) {
-    NFA nfa;
-    NFAFragment f = build_fragment(root, nfa);
-    nfa.start = f.start;
-    nfa.accept = f.accept;
-    return nfa;
+    states.clear();
+    NFAFragment f = build_fragment(root, *this);
+    initial_state = f.start;
+    accepting_state = f.accept;
 }
 
 void DFA::build(const NFA& nfa) {
