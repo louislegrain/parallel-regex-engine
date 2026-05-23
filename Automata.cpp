@@ -1,3 +1,6 @@
+#include <map>
+#include <set>
+#include <stack>
 #include "Automata.h"
 
 // Useful for the McNaughton–Yamada–Thompson algorithm
@@ -90,6 +93,74 @@ bool DFA::accepts(const std::string& text) const {
 
 size_t DFA::size() const { return states.size(); }
 
+std::set<size_t> NFA::epsilon_closure(const std::set<size_t>& initial_states) const {
+    std::set<size_t> res;
+    std::stack<size_t> stack;
+    for (size_t state : initial_states) {
+        res.insert(state);
+        stack.push(state);
+    }
+
+    while (!stack.empty()) {
+        const size_t current = stack.top();
+        stack.pop();
+
+        for (auto [transition, next_state] : states[current].transitions) {
+            if (transition != EPSILON || res.contains(next_state)) continue;
+            res.insert(next_state);
+            stack.push(next_state);
+        }
+    }
+
+    return res;
+}
+
+std::set<size_t> NFA::move(const std::set<size_t>& initial_states, const char transition) const {
+    std::set<size_t> res;
+    if (transition == EPSILON) return res;
+
+    for (const size_t state : initial_states) {
+        for (auto [next_transition, next_state] : states[state].transitions) {
+            if (next_transition == transition) res.insert(next_state);
+        }
+    }
+
+    return res;
+}
+
 void DFA::build(const NFA& nfa) {
-    // To do (Louis)
+    initial_state = 0;
+    states.clear();
+
+    std::map<std::set<size_t>, size_t> set_idx;
+    std::stack<std::set<size_t>> stack;
+
+    const std::set<size_t> initial_closure = nfa.epsilon_closure({nfa.initial_state});
+    set_idx[initial_closure] = 0;
+    stack.push(initial_closure);
+
+    states.emplace_back();
+    states[0].accepting = initial_closure.contains(nfa.accepting_state);
+
+    while (!stack.empty()) {
+        std::set<size_t> current_closure = stack.top();
+        stack.pop();
+        const size_t current_idx = set_idx[current_closure];
+
+        for (int c = 1; c < 256; ++c) { // start at 1 because 0 is epsilon
+            std::set<size_t> next_set = nfa.move(current_closure, static_cast<char>(c));
+            if (next_set.empty()) continue;
+
+            std::set<size_t> next_closure = nfa.epsilon_closure(next_set);
+
+            auto [it, inserted] = set_idx.try_emplace(next_closure, states.size());
+            if (inserted) {
+                stack.push(next_closure);
+                states.emplace_back();
+                states.back().accepting = next_closure.contains(nfa.accepting_state);
+            }
+
+            states[current_idx].transitions[c] = it->second;
+        }
+    }
 }

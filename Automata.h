@@ -2,6 +2,7 @@
 #define PARALLEL_REGEX_ENGINE_AUTOMATA_H
 #include <array>
 #include <limits>
+#include <set>
 #include <vector>
 #include "RegexParser.h"
 
@@ -23,6 +24,8 @@ public:
     void build(const RegexNode* root);
     size_t add_state();
     void add_transition(size_t from, size_t to, char c);
+    [[nodiscard]] std::set<size_t> epsilon_closure(const std::set<size_t>& initial_states) const;
+    [[nodiscard]] std::set<size_t> move(const std::set<size_t>& initial_states, char transition) const;
 };
 
 struct DFAState {
