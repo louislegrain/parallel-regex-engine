@@ -24,21 +24,46 @@ std::vector<size_t> PaREMMatcher::possible_starts(char first_char, char prev_las
     std::set<size_t> S, L;
 
     for (size_t q = 0; q < dfa.size(); q++) {
-        if (dfa.step(q, first_char) != INVALID_STATE)
+        if (dfa.step(q, first_char) != INVALID_STATE) {
             S.insert(q);
-
+        }
         size_t dest = dfa.step(q, prev_last_char);
-        if (dest != INVALID_STATE)
+        if (dest != INVALID_STATE) {
             L.insert(dest);
+        }
     }
 
     std::vector<size_t> R;
     for (size_t q = 0; q < dfa.size(); q++) {
-        if (S.count(q) && L.count(q))
+        if (S.count(q) && L.count(q)) {
             R.push_back(q);
+        }
     }
 
     return R;
+}
+
+// Algo 1, l16-25
+bool PaREMMatcher::run_from(size_t start_state, const std::string& text, size_t begin, size_t end, Rr& rr) const {
+    size_t state = start_state;
+    size_t first_state = INVALID_STATE;
+    size_t found = 0;
+
+    for (size_t i = begin; i < end; i++) {
+        state = dfa.step(state, text[i]);
+        if (state == INVALID_STATE) {
+            return false;
+        }
+        if (i == begin) {
+            first_state = state;
+        }
+        if (dfa.is_accepting(state)) {
+            found++;
+        }
+    }
+
+    rr = {start_state, first_state, state, found};
+    return true;
 }
 
 PaREMResult PaREMMatcher::match(const std::string& text, size_t p) const {
@@ -53,9 +78,39 @@ PaREMResult PaREMMatcher::match(const std::string& text, size_t p) const {
     }
 
     std::vector<Chunk> chunks = split_text(text.size(), p);
+    std::vector<std::vector<Rr>> routes(p);
 
-    // TODO parallel phase
-    // TODO reduction
+#pragma omp parallel for num_threads(p)
+    for (size_t i = 0; i < p; i++) {
+        size_t begin = chunks[i].begin;
+        size_t end = chunks[i].end;
+
+        // th 0 starts from q0 (Algo 1, ID=0 already knows init state)
+        if (i == 0) {
+            Rr rr{};
+            if (run_from(dfa.initial_state, text, begin, end, rr)) {
+                routes[0].push_back(rr);
+            }
+            continue;
+        }
+
+        char first_char = text[begin];
+        char prev_last_char = text[chunks[i - 1].end - 1];
+
+        std::vector<size_t> starts = possible_starts(first_char, prev_last_char);
+        for (size_t r : starts) {
+            Rr rr{};
+            if (run_from(r, text, begin, end, rr)) {
+                routes[i].push_back(rr);
+            }
+        }
+    }
+
+    if (routes[0].empty()) {
+        return {};
+    }
+
+    // TO Do reduction
     return {};
 }
 
