@@ -27,21 +27,21 @@ NFAFragment build_fragment(const RegexNode* node, NFA& nfa) {
         nfa.add_transition(s, a, EPSILON);
         return {s, a};
     }
-    
+
     if (node->type == RegexNodeType::CHAR) {
         const size_t s = nfa.add_state();
         const size_t a = nfa.add_state();
         nfa.add_transition(s, a, node->value);
         return {s, a};
     }
-    
+
     if (node->type == RegexNodeType::CONCAT) {
         const NFAFragment left = build_fragment(node->op1, nfa);
         const NFAFragment right = build_fragment(node->op2, nfa);
         nfa.add_transition(left.accept, right.start, EPSILON);
         return {left.start, right.accept};
     }
-    
+
     if (node->type == RegexNodeType::ALTER) {
         const size_t s = nfa.add_state();
         const size_t a = nfa.add_state();
@@ -53,7 +53,7 @@ NFAFragment build_fragment(const RegexNode* node, NFA& nfa) {
         nfa.add_transition(right.accept, a, EPSILON);
         return {s, a};
     }
-    
+
     // STAR (write it with an if and do an exception after like unsuported regex
     // node type ??)
     const size_t s = nfa.add_state();

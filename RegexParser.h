@@ -24,7 +24,7 @@ struct RegexNode {
     RegexNode *op1, *op2;
 
     [[nodiscard]] RegexNode* clone() const {
-        return new RegexNode {
+        return new RegexNode{
             type,
             value,
             op1 == nullptr ? nullptr : op1->clone(),

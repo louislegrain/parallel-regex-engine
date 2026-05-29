@@ -43,7 +43,7 @@ public:
     void build(const NFA& nfa);
     // use of const because read only methods
     [[nodiscard]] size_t step(size_t state, char c) const;     // perform DFA transition
-    [[nodiscard]] bool accepts(const std::string &text) const; // sequ DFA matcher
+    [[nodiscard]] bool accepts(const std::string& text) const; // sequ DFA matcher
     [[nodiscard]] size_t size() const;                         // nb of DFA states
 };
 

@@ -8,16 +8,16 @@ RegexNode* RegexParser::parse_expr() {
     while (true) {
         const char c = curr();
         RegexNode* right = c == '|' || c == ')' || c == '\0' // handles edge cases such as `()` `a||b` `(a|)` `a|`
-            ? new RegexNode{RegexNodeType::EPSILON, 0, nullptr, nullptr}
-            : parse_concat();
+                               ? new RegexNode{RegexNodeType::EPSILON, 0, nullptr, nullptr}
+                               : parse_concat();
         if (right == nullptr) {
             delete node;
             return nullptr;
         }
 
         node = node == nullptr
-            ? right
-            : new RegexNode{RegexNodeType::ALTER, 0, node, right};
+                   ? right
+                   : new RegexNode{RegexNodeType::ALTER, 0, node, right};
 
         if (curr() == '|') {
             ++pos;
@@ -109,11 +109,11 @@ void RegexParser::print_ast_helper(const RegexNode* root, const int indent) {
     if (root->type == RegexNodeType::CHAR) std::cout << " " << root->value;
     std::cout << std::endl;
 
-    RegexNode* arr[] = { root->op1, root->op2 };
+    RegexNode* arr[] = {root->op1, root->op2};
     for (const auto node : arr) {
         if (node == nullptr) break;
         std::cout << std::string(2 * indent, ' ') << "|_ ";
-        print_ast_helper(node, indent+1);
+        print_ast_helper(node, indent + 1);
     }
 }
 
