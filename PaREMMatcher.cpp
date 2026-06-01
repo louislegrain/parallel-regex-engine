@@ -1,4 +1,3 @@
-#include <algorithm>
 #include <set>
 #include "PaREMMatcher.h"
 
@@ -110,7 +109,39 @@ PaREMResult PaREMMatcher::match(const std::string& text, size_t p) const {
         return {};
     }
 
-    // TO Do reduction
-    return {};
+    // routes[0] = always exactly 1 entry (bc th 0 starts from q0)
+    std::vector<PartialResult> current;
+    current.push_back({routes[0][0].end_state, routes[0][0].found});
+
+    for (size_t i = 1; i < p; i++) {
+        std::vector<PartialResult> next;
+        char fc = text[chunks[i].begin];
+
+        for (size_t j = 0; j < current.size(); j++) {
+            size_t expected = dfa.step(current[j].end_state, fc);
+            if (expected == INVALID_STATE) {
+                continue;
+            }
+            for (size_t k = 0; k < routes[i].size(); k++) {
+                if (routes[i][k].first_state == expected) {
+                    next.push_back(
+                        {routes[i][k].end_state, current[j].found + routes[i][k].found});
+                }
+            }
+        }
+
+        current = next;
+        if (current.empty()) {
+            return {};
+        }
+    }
+
+    for (size_t j = 0; j < current.size(); j++) {
+        if (dfa.is_accepting(current[j].end_state)) {
+            return {true, current[j].found};
+        }
+    }
+
+    return {false, current[0].found};
 }
 

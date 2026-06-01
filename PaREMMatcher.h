@@ -28,6 +28,11 @@ private:
         size_t found;
     };
 
+    struct PartialResult {
+        size_t end_state;
+        size_t found;
+    };
+
     const DFA& dfa;
 
     std::vector<Chunk> split_text(size_t n, size_t p) const;
