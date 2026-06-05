@@ -12,6 +12,12 @@
 #include "PaREMMatcher.h"
 #include "RegexParser.h"
 
+struct Benchmark {
+    std::string name;
+    std::string regex;
+    std::string (*generator)(size_t);
+};
+
 double ms_between(const std::chrono::high_resolution_clock::time_point a, const std::chrono::high_resolution_clock::time_point b) {
     return static_cast<double>(std::chrono::duration_cast<std::chrono::nanoseconds>(b - a).count()) / 1e6;
 }
@@ -94,6 +100,33 @@ std::string gen_p2(const size_t n) {
     s += 'e';
     s.append(m, 'f');
     s += 'g';
+
+    return s;
+}
+
+// P3: (ab)* -> n/2 * (ab)
+std::string gen_p3(const size_t n) {
+    std::string s;
+
+    for (size_t i = 0; i < n / 2; ++i) {
+        s += "ab";
+    }
+
+    return s;
+}
+
+// P4: ((a|b)*c|d+)?e* -> random (a,b) + c + e padding
+std::string gen_p4(const size_t n) {
+    if (n == 0) return "";
+
+    std::string s(n, 'e');
+    std::uniform_int_distribution bit(0, 1);
+    const size_t k = n / 2;
+
+    for (size_t i = 0; i < k; ++i) {
+        s[i] = bit(rng) ? 'b' : 'a';
+    }
+    s[k] = 'c';
 
     return s;
 }
@@ -223,6 +256,8 @@ int main() {
     check_correctness("(a|b)*c", "aabb");
     check_correctness("((a|b)*c|d+)?e*", "abce");
     check_correctness("((a|b)*c|d+)?e*", "ddd");
+    check_correctness("abc+d?ef*g", "abcccefg");
+    check_correctness("abc+d?ef*g", "abefg");
 
     std::cout << std::endl
               << "--- STATES ---" << std::endl;
@@ -248,15 +283,20 @@ int main() {
 
     std::cout << std::endl
               << "--- GRID ---" << std::endl;
-    std::vector<std::pair<std::string, std::string>> benchmarks = {{"P1", P1}, {"P2", P2}};
-    for (auto& [name, regex] : benchmarks) {
+    std::vector<Benchmark> benchmarks = {
+        {"P1", P1, gen_p1},
+        {"P2", P2, gen_p2},
+        {"P3", P3, gen_p3},
+        {"P4", P4, gen_p4},
+    };
+    for (auto& [name, regex, generator] : benchmarks) {
         DFA dfa = build_dfa(regex);
         SFA sfa;
         sfa.build(dfa);
         PaREMMatcher parem(dfa);
 
         for (size_t n : SIZES) {
-            std::string text = name == "P1" ? gen_p1(n) : gen_p2(n);
+            std::string text = generator(n);
             bool agree = dfa.accepts(text) && parem.match(text, 4).accepted && sfa.accepts_sequential(text) && sfa.accepts_parallel(text);
             std::cout << std::endl
                       << "Testing " << name << " (size n=" << n << ") - Sanity check: " << (agree ? "OK" : "FAILED") << std::endl;
