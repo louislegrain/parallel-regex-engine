@@ -76,20 +76,22 @@ std::string gen_p1(const size_t n) {
     return s;
 }
 
-// P2: abc+d?ef*g -> ab + k*c + d + e + m*f + g
+// P2: abc+d?ef*g -> ab + k*c + optional d + e + m*f + g
 std::string gen_p2(const size_t n) {
-    // fixed chars: a b d e g
-    // remaining split between c (>=1) and f (>=0)
-    const size_t rem = n >= 5 ? n - 5 : 0;
-    size_t k = rem / 2;
-    if (k == 0) k = 1; // at least one c
-    const size_t m = rem > k ? rem - k : 0;
+    // fixed chars: a b c e g
+    // remaining split between c (>=1), d (0 or 1) and f (>=0)
+    const bool include_d = n >= 6;
+    const size_t fixed_len = include_d ? 6 : 5;
+    const size_t rem = n > fixed_len ? n - fixed_len : 0;
+    const size_t k = 1 + rem / 2;
+    const size_t m = rem - rem / 2;
 
     std::string s;
     s.reserve(n);
     s += "ab";
     s.append(k, 'c');
-    s += "de";
+    if (include_d) s += 'd';
+    s += 'e';
     s.append(m, 'f');
     s += 'g';
 
